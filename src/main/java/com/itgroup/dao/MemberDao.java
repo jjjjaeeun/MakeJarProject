@@ -48,7 +48,7 @@ public class MemberDao {
             rs = pstmt.executeQuery();
 
             if(rs.next()){
-                cnt = rs.getInt("cnn");
+                cnt = rs.getInt("cnt");
             }
 
         } catch (SQLException e) {
