@@ -7,38 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 //데이터 베이스와 직접 연동하여 CRUD 작업을 수행해주는 DAO 클래스
-public class MemberDao {
+public class MemberDao extends SuperDao{
 
     public MemberDao() {
-        //드라이버 관련 OracleDriver 클래스는 ojdbc6.jar 파일에 포함되어 있는 자바 클래스입니다.
-        String driver = "oracle.jdbc.driver.OracleDriver";
-        try {
-            Class.forName(driver); // 동적 객체 생성하는 문법.
-
-        } catch (ClassNotFoundException e) {
-
-            System.out.println("해당 드라이버가 존재하지 않습니다.");
-            throw new RuntimeException(e); // = e.printStackTrace();
-        }
 
     }
 
-    public Connection getConnection() {
-        Connection conn = null; //접속 객체
-
-        String url = "jdbc:oracle:thin:@localhost:1521:xe";
-        String id = "oraman";
-        String password = "oracle";
-
-        try {
-            conn = DriverManager.getConnection(url, id, password);
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return conn;
-    }
 
     public int getSize() {
         String sql = "select count(*) as cnt from members"; // 함수 사용시 as 별칭 적어두기
@@ -48,7 +22,7 @@ public class MemberDao {
         int cnt = 0;
 
         try {
-            conn = this.getConnection(); // 접속 객체 구현하기
+            conn = super.getConnection(); // 접속 객체 구현하기
             pstmt = conn.prepareStatement(sql);
             rs = pstmt.executeQuery();
 
@@ -92,7 +66,7 @@ public class MemberDao {
 
 
         try {
-            conn = this.getConnection();
+            conn = super.getConnection();
             pstmt = conn.prepareStatement(sql);
             rs = pstmt.executeQuery();
 
@@ -154,7 +128,7 @@ public class MemberDao {
         ResultSet rs = null;
 
         try {
-            conn = this.getConnection();
+            conn = super.getConnection();
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, gender);
             rs = pstmt.executeQuery();
@@ -207,7 +181,7 @@ public class MemberDao {
         String sql = "select * from members where id = ?";
         // ? 치환은 executeQuery () 메소드 전에 해야함
         try {
-            conn = this.getConnection();
+            conn = super.getConnection();
             pstmt = conn.prepareStatement(sql);
             // 1번째 ?를 , id로 치환 해
             pstmt.setString(1,id);
@@ -222,7 +196,7 @@ public class MemberDao {
                 bean.setName(rs.getString("name"));
                 bean.setPassword(rs.getString("password"));
                 bean.setGender(rs.getString("gender"));
-                bean.setBirth(rs.getString("birth"));
+                bean.setBirth(String.valueOf(rs.getDate("birth")));
                 bean.setMarriage(rs.getString("marriage"));
                 bean.setSalary(rs.getInt("salary"));
                 bean.setAddress(rs.getString("address"));
@@ -257,7 +231,7 @@ public class MemberDao {
 
         try {
 
-            conn = this.getConnection();
+            conn = super.getConnection();
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1,id);
 
@@ -288,6 +262,110 @@ public class MemberDao {
 
             }
 
+        }
+
+        return cnt;
+    }
+
+    public int insertData(Member bean) {
+        //웹 페이지 에서 회원 정보를 입력하고 가입 버튼을 눌렀습니다.
+        int cnt = -1 ;
+
+        String sql = "insert into members(id, name, password, gender, birth, marriage, salary, address, manager)"; // 문장이 길어 두줄로 입력할 수 있음
+        sql += " values(?,?,?,?,?,?,?,?,?)";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try{
+            conn = super.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,bean.getId());
+            pstmt.setString(2,bean.getName());
+            pstmt.setString(3,bean.getPassword());
+            pstmt.setString(4,bean.getGender());
+            pstmt.setString(5,bean.getBirth());
+            pstmt.setString(6,bean.getMarriage());
+            pstmt.setInt(7,bean.getSalary());
+            pstmt.setString(8,bean.getAddress());
+            pstmt.setString(9,bean.getManager());
+            cnt = pstmt.executeUpdate();
+
+            conn.commit();
+        }catch (Exception ex){
+            ex.printStackTrace();
+
+            try {
+
+            conn.rollback();
+            }catch (Exception ex2){
+                ex2.printStackTrace();
+
+            }
+
+        }finally {
+
+            try {
+                if(pstmt != null){pstmt.close();}
+                if(conn != null){conn.close();}
+
+            }catch (Exception ex){
+                ex.printStackTrace();
+
+            }
+        }
+
+        return  cnt;
+    }
+
+    public int updateData(Member bean) {
+        //수정된 나의 정보 bean을 사용하여 데이터 베이스에 수정
+        int cnt = -1;
+
+        String sql = "update members set name = ?, password = ?,gender = ?,birth = ?,marriage = ?,salary = ?,address = ?,manager = ? ";
+        sql += " where id = ? ";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            conn = super.getConnection();
+            pstmt = conn.prepareStatement(sql);
+
+            pstmt.setString(1,bean.getName());
+            pstmt.setString(2,bean.getPassword());
+            pstmt.setString(3,bean.getGender());
+            pstmt.setString(4,bean.getBirth());
+            pstmt.setString(5,bean.getMarriage());
+            pstmt.setInt(6,bean.getSalary());
+            pstmt.setString(7,bean.getAddress());
+            pstmt.setString(8,bean.getManager());
+            pstmt.setString(9,bean.getId());
+
+            cnt = pstmt.executeUpdate();
+
+            conn.commit();
+        }catch (Exception e){
+            e.printStackTrace();
+
+            try {
+
+            conn.rollback();
+            }catch (Exception e2){
+                e2.printStackTrace();
+
+            }
+
+        }finally {
+
+            try {
+                if(pstmt != null ){pstmt.close();}
+                if(conn != null ){conn.close();}
+
+            }catch (Exception e){
+                e.printStackTrace();
+
+            }
         }
 
         return cnt;
