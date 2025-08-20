@@ -113,6 +113,6 @@ public class BoardDao extends SuperDao{
 
         }
 
-        return null;
+        return boardList;
     }
 }
